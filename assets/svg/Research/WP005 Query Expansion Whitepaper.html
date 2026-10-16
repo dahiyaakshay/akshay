@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Query Expansion for AI Retrievability - Akshay Dahiya</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Source+Sans+3:wght@300;400;500;600&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --cream: #f7f4ef;
+  --cream-2: #efe9e0;
+  --cream-3: #e5ddd0;
+  --ink: #1a1814;
+  --ink-2: #2e2b26;
+  --ink-3: #4a4640;
+  --ink-4: #7a7570;
+  --ink-5: #a8a39d;
+  /* WP005 accent: indigo - distinct from WP001-004 blue */
+  --indigo: #3730a3;
+  --indigo-2: #4f46e5;
+  --indigo-light: #eef2ff;
+  --indigo-mid: #6366f1;
+  --red: #8b1a1a;
+  --green-dk: #1a4a2e;
+  --amber: #7a4a00;
+  --rule: rgba(26,24,20,0.12);
+  --rule-2: rgba(26,24,20,0.06);
+  /* Expansion layer colours */
+  --layer-core: #3730a3;
+  --layer-syn: #7c3aed;
+  --layer-rel: #0369a1;
+  --layer-sub: #059669;
+  --layer-ent: #d97706;
+  --layer-alt: #be185d;
+  --serif: 'Lora', Georgia, serif;
+  --sans: 'Source Sans 3', sans-serif;
+  --mono: 'Source Code Pro', monospace;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { background: var(--cream); color: var(--ink); font-family: var(--serif); font-size: 17px; line-height: 1.8; -webkit-font-smoothing: antialiased; }
+
+/* COVER */
+.cover { min-height: 100vh; display: grid; grid-template-rows: auto 1fr auto; border-bottom: 3px solid var(--ink); position: relative; overflow: hidden; }
+.cover-stripe { position: absolute; right: 0; top: 0; bottom: 0; width: 6px; background: var(--indigo-2); }
+/* WP005 signature: radial expansion SVG on cover right */
+.cover-radial { position: absolute; right: 80px; top: 50%; transform: translateY(-50%); opacity: 0.08; pointer-events: none; }
+.cover-top { padding: 40px 64px; display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--rule); }
+.cover-logo { font-family: var(--sans); font-size: 13px; font-weight: 600; color: var(--ink-3); letter-spacing: 0.08em; text-transform: uppercase; }
+.cover-series { font-family: var(--mono); font-size: 11px; color: var(--ink-5); letter-spacing: 0.06em; }
+.cover-body { padding: 80px 64px; display: flex; flex-direction: column; justify-content: center; max-width: 680px; position: relative; z-index: 1; }
+.cover-label { font-family: var(--sans); font-size: 12px; font-weight: 600; color: var(--indigo-2); letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 28px; display: flex; align-items: center; gap: 12px; }
+.cover-label::before { content: ''; display: inline-block; width: 32px; height: 2px; background: var(--indigo-2); }
+.cover h1 { font-family: var(--serif); font-size: clamp(30px, 4vw, 50px); font-weight: 700; line-height: 1.15; color: var(--ink); margin-bottom: 12px; letter-spacing: -0.02em; }
+.cover h1 span { font-style: italic; color: var(--indigo-2); }
+.cover-subtitle { font-family: var(--serif); font-size: clamp(15px, 1.8vw, 20px); font-weight: 400; font-style: italic; color: var(--ink-3); margin-bottom: 40px; max-width: 600px; line-height: 1.6; }
+/* WP005 signature: expansion layer legend on cover */
+.expansion-legend { display: flex; flex-direction: column; gap: 6px; margin-bottom: 40px; padding: 20px 24px; border: 1px solid var(--rule); background: #fff; width: fit-content; }
+.expansion-legend-title { font-family: var(--mono); font-size: 10px; color: var(--ink-5); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
+.exp-layer { display: flex; align-items: center; gap: 10px; font-family: var(--sans); font-size: 12px; color: var(--ink-3); }
+.exp-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.cover-meta-grid { display: grid; grid-template-columns: repeat(4, auto); gap: 0; border: 1px solid var(--rule); width: fit-content; }
+.cover-meta-item { padding: 16px 28px; border-right: 1px solid var(--rule); }
+.cover-meta-item:last-child { border-right: none; }
+.cover-meta-label { font-family: var(--sans); font-size: 10px; font-weight: 600; color: var(--ink-5); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px; }
+.cover-meta-value { font-family: var(--sans); font-size: 14px; font-weight: 500; color: var(--ink-2); }
+.cover-bottom { padding: 32px 64px; border-top: 1px solid var(--rule); display: flex; justify-content: space-between; align-items: center; }
+.cover-author { font-family: var(--sans); font-size: 14px; color: var(--ink-3); }
+.cover-author strong { color: var(--ink); font-weight: 600; }
+.cover-disclaimer { font-family: var(--sans); font-size: 11px; color: var(--ink-5); max-width: 380px; line-height: 1.5; text-align: right; }
+
+/* PAPER */
+.paper { max-width: 820px; margin: 0 auto; padding: 80px 40px; }
+.toc { border: 1px solid var(--rule); padding: 40px 48px; margin-bottom: 80px; background: #fff; }
+.toc-title { font-family: var(--sans); font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-4); margin-bottom: 24px; }
+.toc-item { display: flex; align-items: baseline; padding: 6px 0; border-bottom: 1px solid var(--rule-2); font-family: var(--sans); font-size: 14px; color: var(--ink-3); }
+.toc-item:last-child { border-bottom: none; }
+.toc-num { color: var(--indigo-2); font-weight: 600; min-width: 32px; font-family: var(--mono); font-size: 12px; }
+.toc-dots { flex: 1; border-bottom: 1px dotted var(--rule); margin: 0 8px; position: relative; top: -4px; }
+.toc-page { color: var(--ink-5); font-family: var(--mono); font-size: 12px; }
+
+.section { margin-bottom: 72px; }
+.section-num { font-family: var(--mono); font-size: 11px; color: var(--indigo-2); letter-spacing: 0.1em; margin-bottom: 8px; font-weight: 500; }
+.section-title { font-family: var(--serif); font-size: clamp(22px, 2.5vw, 30px); font-weight: 700; color: var(--ink); line-height: 1.2; margin-bottom: 8px; letter-spacing: -0.01em; }
+.section-rule { width: 48px; height: 2px; background: var(--indigo-2); margin-bottom: 28px; }
+.section-rule.thin { width: 32px; height: 1px; background: var(--rule); margin-bottom: 20px; }
+.subsection { margin-bottom: 40px; }
+.sub-num { font-family: var(--mono); font-size: 10px; color: var(--ink-5); letter-spacing: 0.08em; margin-bottom: 6px; }
+.sub-title { font-family: var(--serif); font-size: 18px; font-weight: 600; color: var(--ink-2); margin-bottom: 12px; }
+
+p { margin-bottom: 18px; color: var(--ink-3); font-size: 16px; line-height: 1.85; }
+p:last-child { margin-bottom: 0; }
+strong { color: var(--ink); font-weight: 600; }
+
+.pullquote { border-left: 3px solid var(--indigo-2); padding: 20px 28px; margin: 36px 0; background: var(--indigo-light); }
+.pullquote p { font-family: var(--serif); font-size: 17px; font-style: italic; color: var(--indigo); margin: 0; line-height: 1.7; }
+
+.callout { border: 1px solid var(--rule); padding: 24px 28px; margin: 28px 0; background: #fff; }
+.callout-label { font-family: var(--sans); font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--indigo-2); margin-bottom: 10px; }
+.callout p { font-size: 14px; color: var(--ink-3); margin: 0; line-height: 1.7; }
+
+.paper-list { list-style: none; margin: 20px 0 24px; }
+.paper-list li { display: flex; gap: 16px; padding: 10px 0; border-bottom: 1px solid var(--rule-2); font-size: 15px; color: var(--ink-3); line-height: 1.65; }
+.paper-list li:last-child { border-bottom: none; }
+.paper-list .li-num { font-family: var(--mono); font-size: 11px; color: var(--indigo-2); min-width: 24px; padding-top: 3px; font-weight: 500; }
+.paper-list .li-body strong { color: var(--ink-2); display: block; font-size: 14px; margin-bottom: 2px; }
+
+.figure { margin: 40px 0; border: 1px solid var(--rule); background: #fff; }
+.figure-inner { padding: 32px; }
+.figure-caption { padding: 12px 32px; border-top: 1px solid var(--rule); background: var(--cream-2); font-family: var(--sans); font-size: 12px; color: var(--ink-4); line-height: 1.5; }
+.figure-caption strong { color: var(--ink-3); }
+
+/* EXPANSION LAYER BLOCKS */
+.layer-block { border: 1px solid var(--rule); padding: 16px 20px; margin-bottom: 8px; background: #fff; display: flex; gap: 14px; align-items: flex-start; }
+.layer-tag { font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 3px 10px; border-radius: 2px; white-space: nowrap; margin-top: 2px; }
+.layer-content { font-family: var(--sans); font-size: 13px; color: var(--ink-3); line-height: 1.6; }
+.layer-content strong { color: var(--ink-2); display: block; margin-bottom: 4px; font-size: 13px; }
+
+/* ENTITY COMPARISON TABLE */
+.entity-comparison { width: 100%; border-collapse: collapse; font-family: var(--sans); font-size: 12px; }
+.entity-comparison thead th { background: var(--ink); color: #fff; padding: 10px 14px; text-align: left; font-size: 11px; letter-spacing: 0.04em; }
+.entity-comparison tbody td { padding: 9px 14px; border-bottom: 1px solid var(--rule); color: var(--ink-3); vertical-align: top; }
+.entity-comparison tbody tr:nth-child(even) { background: var(--cream-2); }
+.entity-real { color: var(--green-dk); font-weight: 600; }
+.entity-halluc { color: var(--red); text-decoration: line-through; }
+.entity-partial { color: var(--amber); }
+.badge { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; padding: 2px 7px; border-radius: 2px; text-transform: uppercase; margin-left: 4px; }
+.badge-real { background: #d4edda; color: var(--green-dk); }
+.badge-halluc { background: #f8d7da; color: var(--red); }
+.badge-warn { background: #fff3cd; color: var(--amber); }
+.badge-best { background: #d4edda; color: var(--green-dk); }
+
+/* SCORE TABLE */
+.score-table { width: 100%; border-collapse: collapse; font-family: var(--sans); font-size: 13px; }
+.score-table thead tr { background: var(--ink); color: #fff; }
+.score-table thead th { padding: 12px 16px; text-align: left; font-weight: 600; font-size: 12px; letter-spacing: 0.04em; }
+.score-table tbody tr { border-bottom: 1px solid var(--rule); }
+.score-table tbody tr:nth-child(even) { background: var(--cream-2); }
+.score-table td { padding: 11px 16px; color: var(--ink-3); vertical-align: middle; }
+.score-table td:first-child { font-weight: 600; color: var(--ink-2); font-size: 13px; }
+.score-table .best { color: var(--green-dk); font-weight: 700; }
+.score-table .warn { color: var(--amber); font-weight: 600; }
+.score-table .bad { color: var(--red); }
+.score-table .winner-row td { background: #eef4ec !important; }
+.score-table .winner-row td:first-child { border-left: 3px solid var(--green-dk); }
+
+/* HALLUCINATION CALLOUT */
+.halluc-callout { border: 2px solid var(--red); padding: 20px 24px; margin: 24px 0; background: #fdf2f2; }
+.halluc-label { font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--red); margin-bottom: 8px; }
+.halluc-callout p { font-size: 14px; color: var(--ink-3); margin: 0; line-height: 1.7; }
+
+/* FINDINGS */
+.findings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 28px 0; }
+.finding-card { border: 1px solid var(--rule); padding: 24px; background: #fff; }
+.finding-num { font-family: var(--mono); font-size: 28px; font-weight: 500; color: var(--indigo-2); line-height: 1; margin-bottom: 8px; }
+.finding-label { font-family: var(--sans); font-size: 13px; font-weight: 600; color: var(--ink-2); margin-bottom: 8px; }
+.finding-body { font-family: var(--sans); font-size: 13px; color: var(--ink-4); line-height: 1.6; }
+
+/* MODEL CARDS */
+.model-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 24px 0; }
+.model-card { border: 1px solid var(--rule); background: #fff; overflow: hidden; }
+.model-card-header { padding: 14px 20px; border-bottom: 1px solid var(--rule); display: flex; justify-content: space-between; align-items: center; }
+.model-name-text { font-family: var(--sans); font-size: 14px; font-weight: 700; color: var(--ink-2); }
+.model-org { font-family: var(--mono); font-size: 10px; color: var(--ink-5); letter-spacing: 0.06em; }
+.model-body { padding: 16px 20px; }
+.model-stat { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--rule-2); font-family: var(--sans); font-size: 12px; }
+.model-stat:last-child { border-bottom: none; }
+.model-stat-label { color: var(--ink-4); }
+.model-stat-val { font-weight: 600; color: var(--ink-2); }
+.verdict-tag { display: inline-block; font-family: var(--sans); font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 10px; border-radius: 2px; }
+
+/* CHART */
+.chart-wrap { position: relative; height: 260px; }
+
+/* IMPLICATIONS */
+.implications-list { list-style: none; }
+.implication { display: grid; grid-template-columns: 28px 1fr; gap: 16px; padding: 18px 0; border-bottom: 1px solid var(--rule-2); align-items: start; }
+.implication:last-child { border-bottom: none; }
+.imp-num { width: 28px; height: 28px; background: var(--indigo-light); display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 11px; color: var(--indigo-2); font-weight: 600; margin-top: 2px; }
+.imp-title { font-family: var(--sans); font-size: 14px; font-weight: 700; color: var(--ink-2); margin-bottom: 4px; }
+.imp-body { font-family: var(--sans); font-size: 13px; color: var(--ink-4); line-height: 1.6; }
+
+.new-finding { border: 2px solid var(--indigo-2); padding: 24px 28px; margin: 32px 0; background: var(--indigo-light); }
+.new-finding-label { font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--indigo-2); margin-bottom: 10px; }
+.new-finding p { font-size: 14px; color: var(--indigo); margin: 0; line-height: 1.7; }
+
+.paper-footer { border-top: 2px solid var(--ink); padding: 32px 40px; max-width: 820px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; font-family: var(--sans); font-size: 12px; color: var(--ink-5); }
+.paper-footer strong { color: var(--ink-3); }
+.page-divider { max-width: 820px; margin: 0 auto; height: 1px; background: var(--rule); }
+
+@media (max-width: 700px) {
+  .cover-body { padding: 48px 32px; }
+  .cover-top, .cover-bottom { padding: 24px 32px; }
+  .paper { padding: 48px 24px; }
+  .cover-meta-grid { grid-template-columns: 1fr 1fr; }
+  .findings-grid, .model-grid { grid-template-columns: 1fr; }
+  .cover-radial { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- COVER -->
+<div class="cover">
+  <div class="cover-stripe"></div>
+  <!-- WP005 signature: radial expansion graphic -->
+  <svg class="cover-radial" width="420" height="420" viewBox="0 0 420 420" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="210" cy="210" r="30" fill="#3730a3"/>
+    <circle cx="210" cy="210" r="70" stroke="#3730a3" stroke-width="1.5" stroke-dasharray="4 6"/>
+    <circle cx="210" cy="210" r="110" stroke="#7c3aed" stroke-width="1.2" stroke-dasharray="3 8"/>
+    <circle cx="210" cy="210" r="155" stroke="#0369a1" stroke-width="1" stroke-dasharray="2 10"/>
+    <circle cx="210" cy="210" r="200" stroke="#059669" stroke-width="0.8" stroke-dasharray="2 12"/>
+    <line x1="210" y1="180" x2="210" y2="10" stroke="#3730a3" stroke-width="0.8" opacity="0.4"/>
+    <line x1="210" y1="240" x2="210" y2="410" stroke="#3730a3" stroke-width="0.8" opacity="0.4"/>
+    <line x1="180" y1="210" x2="10" y2="210" stroke="#3730a3" stroke-width="0.8" opacity="0.4"/>
+    <line x1="240" y1="210" x2="410" y2="210" stroke="#3730a3" stroke-width="0.8" opacity="0.4"/>
+    <line x1="189" y1="189" x2="39" y2="39" stroke="#7c3aed" stroke-width="0.6" opacity="0.3"/>
+    <line x1="231" y1="231" x2="381" y2="381" stroke="#7c3aed" stroke-width="0.6" opacity="0.3"/>
+    <line x1="231" y1="189" x2="381" y2="39" stroke="#0369a1" stroke-width="0.6" opacity="0.3"/>
+    <line x1="189" y1="231" x2="39" y2="381" stroke="#0369a1" stroke-width="0.6" opacity="0.3"/>
+    <text x="210" y="215" text-anchor="middle" font-family="Source Code Pro" font-size="9" fill="#ffffff">PROMPT</text>
+  </svg>
+
+  <div class="cover-top">
+    <div class="cover-logo">Akshay Dahiya &nbsp;/&nbsp; Independent Research</div>
+    <div class="cover-series">Working Paper No. 005 &nbsp;|&nbsp; 2026 &nbsp;|&nbsp; Series: AI Retrievability Modules for AI Spider</div>
+  </div>
+  <div class="cover-body">
+    <div class="cover-label">Pre-Build Validation Research</div>
+    <h1>Query Expansion<br><span>for AI Retrievability</span></h1>
+    <p class="cover-subtitle">A two-vertical, three-model benchmark validating prompt-to-topic-universe expansion as the foundational layer for all AI Spider content intelligence modules - and the first module in the series to run without page content.</p>
+
+    <div class="expansion-legend">
+      <div class="expansion-legend-title">Topic Universe Layers</div>
+      <div class="exp-layer"><div class="exp-dot" style="background:var(--layer-core);"></div>Core topic</div>
+      <div class="exp-layer"><div class="exp-dot" style="background:var(--layer-syn);"></div>Synonyms</div>
+      <div class="exp-layer"><div class="exp-dot" style="background:var(--layer-rel);"></div>Related concepts</div>
+      <div class="exp-layer"><div class="exp-dot" style="background:var(--layer-sub);"></div>Subtopics</div>
+      <div class="exp-layer"><div class="exp-dot" style="background:var(--layer-ent);"></div>Named entities</div>
+      <div class="exp-layer"><div class="exp-dot" style="background:var(--layer-alt);"></div>Alternative queries</div>
+    </div>
+
+    <div class="cover-meta-grid">
+      <div class="cover-meta-item">
+        <div class="cover-meta-label">Research Type</div>
+        <div class="cover-meta-value">Applied Methodology</div>
+      </div>
+      <div class="cover-meta-item">
+        <div class="cover-meta-label">Models Tested</div>
+        <div class="cover-meta-value">3 LLMs</div>
+      </div>
+      <div class="cover-meta-item">
+        <div class="cover-meta-label">Verticals</div>
+        <div class="cover-meta-value">AI Tools + Digital Mktg</div>
+      </div>
+      <div class="cover-meta-item">
+        <div class="cover-meta-label">Status</div>
+        <div class="cover-meta-value">Validated / Building</div>
+      </div>
+    </div>
+  </div>
+  <div class="cover-bottom">
+    <div class="cover-author">Prepared by <strong>Akshay Dahiya</strong> &nbsp;|&nbsp; Marketing Consultant and Full-Stack Developer &nbsp;|&nbsp; akshaydahiya.site</div>
+    <div class="cover-disclaimer">Fifth paper in the AI Spider pre-build validation series. WP001-004 validated evaluative modules. WP005 validates the generative foundational layer that feeds them all.</div>
+  </div>
+</div>
+
+<div class="page-divider"></div>
+
+<div class="paper">
+
+  <!-- TOC -->
+  <div class="toc">
+    <div class="toc-title">Contents</div>
+    <div class="toc-item"><span class="toc-num">-</span><span>Abstract</span><span class="toc-dots"></span><span class="toc-page">02</span></div>
+    <div class="toc-item"><span class="toc-num">1</span><span>Background and Research Motivation</span><span class="toc-dots"></span><span class="toc-page">03</span></div>
+    <div class="toc-item"><span class="toc-num">2</span><span>Research Methodology</span><span class="toc-dots"></span><span class="toc-page">04</span></div>
+    <div class="toc-item"><span class="toc-num">3</span><span>Benchmark Results</span><span class="toc-dots"></span><span class="toc-page">08</span></div>
+    <div class="toc-item"><span class="toc-num">4</span><span>Key Findings</span><span class="toc-dots"></span><span class="toc-page">12</span></div>
+    <div class="toc-item"><span class="toc-num">5</span><span>Implications for AI Spider</span><span class="toc-dots"></span><span class="toc-page">14</span></div>
+    <div class="toc-item"><span class="toc-num">6</span><span>Next Steps</span><span class="toc-dots"></span><span class="toc-page">15</span></div>
+  </div>
+
+  <!-- ABSTRACT -->
+  <div class="section">
+    <div class="section-num">ABSTRACT</div>
+    <div class="section-rule"></div>
+    <p>This paper documents pre-build validation research for a Query Expansion module planned as a future feature addition to <strong>AI Spider</strong>, a proprietary locally-hosted website crawler and AI retrievability audit platform. It is the fifth paper in a series validating AI Spider's planned content intelligence layer, following WP001 (Competitive Content Intelligence), WP002 (Coverage Score), WP003 (Retrieval Drift), and WP004 (Coverage vs Confidence).</p>
+    <p>WP001-004 validated four evaluative modules - each taking a target page and measuring it against some standard. The Query Expansion module is structurally different: it is <strong>generative</strong>, not evaluative. It runs before any page analysis begins, expanding a user's prompt into a complete topic universe - synonyms, related concepts, subtopics, named entities, and alternative queries - that all other modules use as their reference set. Without an accurate topic universe, every downstream coverage score, entity gap, and drift calculation is anchored to an incomplete or inaccurate baseline.</p>
+    <p>This also means the failure modes are different. WP001-004 failures were analytical: role confusion, coverage inflation, dimension conflation. WP005 failures are generative: hallucination (inventing entity names that do not exist), omission (missing major real entities), and vagueness (generating non-specific concepts that do not help downstream analysis). Research involved designing a zero-content prompt (no page data provided), building a two-vertical test set (AI/GEO tools and digital marketing agency), establishing a ground truth entity list from domain knowledge, and benchmarking three frontier models.</p>
+    <div class="callout">
+      <div class="callout-label">Research Conclusion</div>
+      <p>All three frontier models produced valid, useful topic universes for both verticals. The most important finding is model-specific hallucination: Gemini 3.5 Flash generated three entities in V1 that do not exist as named products (BrightEdge Generative Parser, Moz AI Analytics, Preora), and one in V2 (HawkSEM is real but misclassified). Claude Sonnet 4.6 produced the cleanest entity list - all verified real - with the strongest synonym quality. ChatGPT GPT-5.5 generated the most comprehensive entity set across both verticals including entities from WP001-004 competitor pages. Gemini's subtopic framing was notably more strategic than Claude or ChatGPT, showing the most distinctive expansion style of the three. The module will use Claude as default with a post-processing entity verification step.</p>
+    </div>
+  </div>
+
+  <!-- SECTION 1 -->
+  <div class="section">
+    <div class="section-num">SECTION 1</div>
+    <div class="section-title">Background and Research Motivation</div>
+    <div class="section-rule"></div>
+
+    <p>Every module validated in WP001-004 begins with the same assumption: that the analytical engine knows what topics, entities, and concepts are relevant to the user's query. In WP001, the CCI module compares pages against each other - but it can only identify a gap if it knows the gap exists. In WP002, the Coverage Score generates an expected topic set - but only in Stage 1 of the analysis prompt. In WP003, drift is detected relative to query intent - but the intent must be defined somewhere. In WP004, confidence signals are measured against expected evidence - but the expectation must come from somewhere.</p>
+
+    <div class="pullquote">
+      <p>"Every content intelligence module in AI Spider is only as good as its topic universe. If the universe is incomplete, gaps go undetected. If it contains hallucinated entities, false gaps appear. The Query Expansion module is the foundation the entire content intelligence layer rests on."</p>
+    </div>
+
+    <p>The Query Expansion module formalises this foundational step. Rather than embedding topic generation inside each module's prompt as an incidental step, it makes topic universe generation a dedicated, standalone operation with its own quality criteria, its own failure modes, and its own validation benchmark. The generated universe is stored and reused across all subsequent analyses for that query - ensuring consistency across CCI, Coverage Score, Retrieval Drift, and Coverage vs Confidence analyses.</p>
+
+    <p>This research was motivated by three observations from the WP001-004 benchmark series:</p>
+    <ul class="paper-list">
+      <li><span class="li-num">O1</span><span class="li-body"><strong>Stage 1 quality was the ceiling in WP002.</strong> When models generated too few expected topics, coverage scores were systematically inflated. A dedicated Query Expansion step with quality validation prevents this from happening before analysis begins.</span></li>
+      <li><span class="li-num">O2</span><span class="li-body"><strong>Entity lists varied significantly across WP001-004 benchmarks.</strong> Different modules identified different entities for the same query. A shared Query Universe generated once and reused across modules eliminates this inconsistency.</span></li>
+      <li><span class="li-num">O3</span><span class="li-body"><strong>No page content is required for this task.</strong> The module generates a topic universe from the prompt alone - making it the first AI Spider content intelligence feature that can run without crawling any URL. This enables pre-analysis planning before a user selects their target or competitor pages.</span></li>
+    </ul>
+
+    <p>Before building the module, three research questions needed validation:</p>
+    <ul class="paper-list">
+      <li><span class="li-num">Q1</span><span class="li-body"><strong>Entity accuracy: do models hallucinate tool or brand names?</strong> Unlike WP001-004 where models worked from provided text, here models generate entities from memory. Hallucination risk is real and consequential - a hallucinated entity in the topic universe will propagate as a false gap into every downstream analysis.</span></li>
+      <li><span class="li-num">Q2</span><span class="li-body"><strong>Expansion completeness: do models miss major real entities?</strong> The opposite risk to hallucination. A missing entity means a real gap in the universe - and a real gap in every downstream coverage and entity analysis that relies on it.</span></li>
+      <li><span class="li-num">Q3</span><span class="li-body"><strong>Layer quality: are synonyms, subtopics, and related concepts genuinely useful?</strong> The module generates six layer types. Each must be specifically useful for downstream analysis, not a generic list that could apply to any query.</span></li>
+    </ul>
+  </div>
+
+  <!-- SECTION 2 -->
+  <div class="section">
+    <div class="section-num">SECTION 2</div>
+    <div class="section-title">Research Methodology</div>
+    <div class="section-rule"></div>
+
+    <div class="subsection">
+      <div class="sub-num">2.1</div>
+      <div class="sub-title">The Six-Layer Topic Universe</div>
+      <p>The Query Expansion module generates a topic universe across six layers. Each layer serves a specific downstream purpose. The layers are not interchangeable - each feeds a different analytical capability in the AI Spider content intelligence suite.</p>
+
+      <div class="figure">
+        <div class="figure-inner" style="padding:20px 24px;">
+          <div class="layer-block">
+            <div class="layer-tag" style="background:#ede9fe; color:var(--layer-core);">Core Topic</div>
+            <div class="layer-content"><strong>The central concept</strong> Defines the scope of the entire universe. All other layers expand outward from this anchor. Used by all modules as the query intent statement.</div>
+          </div>
+          <div class="layer-block">
+            <div class="layer-tag" style="background:#f3e8ff; color:var(--layer-syn);">Synonyms</div>
+            <div class="layer-content"><strong>Alternative phrasings of the same concept</strong> Used by Coverage Score to recognise when a page addresses the topic under a different name. Critical for avoiding false negatives in coverage evaluation.</div>
+          </div>
+          <div class="layer-block">
+            <div class="layer-tag" style="background:#e0f2fe; color:var(--layer-rel);">Related Concepts</div>
+            <div class="layer-content"><strong>Adjacent ideas in a complete answer</strong> Used by CCI and Coverage Score to identify what a comprehensive page should address beyond the literal query. Distinct from subtopics - these are conceptual neighbours, not sections.</div>
+          </div>
+          <div class="layer-block">
+            <div class="layer-tag" style="background:#dcfce7; color:var(--layer-sub);">Subtopics</div>
+            <div class="layer-content"><strong>Sections or categories a comprehensive page would include</strong> Used directly as the expected topic set in Coverage Score Stage 1. Quality here directly determines coverage score accuracy.</div>
+          </div>
+          <div class="layer-block">
+            <div class="layer-tag" style="background:#fef9c3; color:var(--layer-ent);">Named Entities</div>
+            <div class="layer-content"><strong>Real, named brands, tools, platforms, frameworks, certifications</strong> Used by CCI for entity gap analysis and by Coverage vs Confidence for entity confidence signals. Hallucination here is the highest-risk failure mode - a false entity propagates through all downstream analyses.</div>
+          </div>
+          <div class="layer-block">
+            <div class="layer-tag" style="background:#fce7f3; color:var(--layer-alt);">Alternative Queries</div>
+            <div class="layer-content"><strong>Common intent variations of the original query</strong> Used by Retrieval Drift to understand what related queries a page might be optimised for, and by RankScan to expand monitoring scope beyond the primary query.</div>
+          </div>
+        </div>
+        <div class="figure-caption"><strong>Figure 1.</strong> The six topic universe layers and their downstream uses. Each layer feeds a specific AI Spider content intelligence module. The Named Entities layer carries the highest risk - hallucinated entities propagate as false gaps into CCI, Coverage Score, and entity expansion analyses.</div>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <div class="sub-num">2.2</div>
+      <div class="sub-title">Prompt Design</div>
+      <p>The WP005 prompt is the simplest in the series - no page content, no competitor content, just the query and structured output instructions. This simplicity is intentional: the module's value is generating a reliable topic universe from domain knowledge alone. The prompt explicitly prohibits entity invention, requires the model to confirm entity existence before including it, and specifies target counts for each layer to prevent either sparse or bloated outputs.</p>
+
+      <div class="figure">
+        <div class="figure-inner" style="padding:0;">
+          <div style="background:#0d1117; padding:12px 24px; display:flex; justify-content:space-between; align-items:center;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span style="font-family:var(--mono); font-size:11px; color:#8b949e; letter-spacing:0.08em; text-transform:uppercase;">Prompt Template - v1.0</span>
+              <span style="font-family:var(--mono); font-size:10px; color:#22c98a; background:rgba(34,201,138,0.15); padding:2px 10px; border-radius:3px;">No page content - query only</span>
+            </div>
+            <span style="font-family:var(--mono); font-size:11px; color:#484f58;">Both verticals identical structure</span>
+          </div>
+          <div style="background:#161b22; padding:24px 28px; font-family:var(--mono); font-size:12px; line-height:1.9; overflow-x:auto;">
+            <p style="color:#8b949e; font-size:11px; margin-bottom:10px;">// SYSTEM ROLE</p>
+            <div style="background:rgba(255,255,255,0.03); border-left:3px solid #22c98a; padding:12px 16px; margin-bottom:20px;">
+              <span style="color:#e6edf3;">You are a Query Expansion engine. Expand the user's PROMPT into a complete topic universe for content analysis.</span><br><br>
+              <span style="color:#ff7b72;">No page content is provided. Generate from your domain knowledge.</span><br>
+              <span style="color:#ff7b72;">Do not invent entity names. Only include real, named entities you are confident exist.</span>
+            </div>
+            <p style="color:#8b949e; font-size:11px; margin-bottom:10px;">// OUTPUT STRUCTURE - 7 sections</p>
+            <div style="background:rgba(255,255,255,0.03); border-left:3px solid #d2a8ff; padding:12px 16px; margin-bottom:16px;">
+              <span style="color:#818cf8;">1. CORE TOPIC</span> <span style="color:#8b949e;">- one clear phrase</span><br>
+              <span style="color:#818cf8;">2. SYNONYMS</span> <span style="color:#8b949e;">- 4-6 distinct alternative phrasings</span><br>
+              <span style="color:#818cf8;">3. RELATED CONCEPTS</span> <span style="color:#8b949e;">- 6-10 adjacent ideas expected in a complete answer</span><br>
+              <span style="color:#818cf8;">4. SUBTOPICS</span> <span style="color:#8b949e;">- 6-8 sections a comprehensive page would include</span><br>
+              <span style="color:#818cf8;">5. ENTITIES</span> <span style="color:#8b949e;">- 10-15 real named brands, tools, platforms, certifications only</span><br>
+              <span style="color:#818cf8;">6. ALTERNATIVE QUERIES</span> <span style="color:#8b949e;">- 4-6 intent variations of the original query</span><br>
+              <span style="color:#818cf8;">7. QUERY UNIVERSE SUMMARY</span> <span style="color:#8b949e;">- flat list of all unique items with total count</span>
+            </div>
+            <div style="background:rgba(255,123,114,0.08); border-left:3px solid #ff7b72; padding:10px 16px;">
+              <span style="color:#ff7b72;">Respond only with the structured output. No commentary outside the format.</span>
+            </div>
+          </div>
+        </div>
+        <div class="figure-caption"><strong>Figure 2.</strong> Full prompt template. No page content is embedded - the model generates entirely from domain knowledge. The "do not invent entity names" instruction is the critical safety constraint for the Named Entities layer. Target counts for each layer (4-6 synonyms, 10-15 entities) prevent sparse or inflated outputs that would skew downstream analysis.</div>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <div class="sub-num">2.3</div>
+      <div class="sub-title">Two-Vertical Test Set and Ground Truth</div>
+      <p>Because no page content is provided, ground truth for WP005 is established differently from WP001-004. Instead of checking model outputs against page text, ground truth is domain knowledge - what entities, concepts, and subtopics an expert in each vertical would independently identify as essential. Ground truth was compiled before running any model tests.</p>
+
+      <ul class="paper-list">
+        <li><span class="li-num">V1</span><span class="li-body"><strong>AI/GEO Tools - "Best AI visibility tools"</strong> Ground truth entity set: Semrush, OtterlyAI, Rankshift, Promptwatch, Peec AI, Profound, Goodie AI, AthenaHQ, Scrunch AI, ChatGPT, Gemini, Perplexity, Claude, Microsoft Copilot, Google AI Overviews. This vertical was carried from WP001-004 giving the richest hallucination check baseline - every real tool in this space is known.</span></li>
+        <li><span class="li-num">V2</span><span class="li-body"><strong>Digital Marketing Agency - "Best digital marketing agency"</strong> Ground truth entity set: WebFX, Ignite Visibility, Neil Patel Digital / NP Digital, Wpromote, Tinuiti, Disruptive Advertising, KlientBoost, Clutch.co, G2, WPP, Publicis Groupe, Dentsu, IPG / Omnicom, Google Partner Program, Meta Business Partner, HubSpot Agency Partner. Tools used by agencies (Google Ads, Meta Ads, HubSpot, Semrush) are legitimate entities in this context.</span></li>
+      </ul>
+    </div>
+
+    <div class="subsection">
+      <div class="sub-num">2.4</div>
+      <div class="sub-title">Models Tested</div>
+      <div class="model-grid">
+        <div class="model-card">
+          <div class="model-card-header">
+            <div><div class="model-name-text">Claude Sonnet 4.6</div><div class="model-org">Anthropic / Cloud API</div></div>
+            <span class="verdict-tag" style="background:#d4edda; color:#1a4a2e;">Recommended</span>
+          </div>
+          <div class="model-body">
+            <div class="model-stat"><span class="model-stat-label">WP001-004 verdict</span><span class="model-stat-val">Best overall x4</span></div>
+            <div class="model-stat"><span class="model-stat-label">Entity style</span><span class="model-stat-val">Conservative, verified</span></div>
+            <div class="model-stat"><span class="model-stat-label">Hallucination risk</span><span class="model-stat-val">Low</span></div>
+          </div>
+        </div>
+        <div class="model-card">
+          <div class="model-card-header">
+            <div><div class="model-name-text">ChatGPT GPT-5.5</div><div class="model-org">OpenAI / Cloud API</div></div>
+            <span class="verdict-tag" style="background:#d4edda; color:#1a4a2e;">Viable</span>
+          </div>
+          <div class="model-body">
+            <div class="model-stat"><span class="model-stat-label">WP001-004 verdict</span><span class="model-stat-val">Production-ready x4</span></div>
+            <div class="model-stat"><span class="model-stat-label">Entity style</span><span class="model-stat-val">Comprehensive, inclusive</span></div>
+            <div class="model-stat"><span class="model-stat-label">Hallucination risk</span><span class="model-stat-val">Low-Medium</span></div>
+          </div>
+        </div>
+        <div class="model-card">
+          <div class="model-card-header">
+            <div><div class="model-name-text">Gemini 3.5 Flash</div><div class="model-org">Google / Cloud API</div></div>
+            <span class="verdict-tag" style="background:#fef3c7; color:#7a4a00;">Caution</span>
+          </div>
+          <div class="model-body">
+            <div class="model-stat"><span class="model-stat-label">WP002-004 pattern</span><span class="model-stat-val">Quantitative inflation</span></div>
+            <div class="model-stat"><span class="model-stat-label">Entity style</span><span class="model-stat-val">Aspirational</span></div>
+            <div class="model-stat"><span class="model-stat-label">Hallucination risk</span><span class="model-stat-val">High (confirmed)</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 3 -->
+  <div class="section">
+    <div class="section-num">SECTION 3</div>
+    <div class="section-title">Benchmark Results</div>
+    <div class="section-rule"></div>
+
+    <div class="subsection">
+      <div class="sub-num">3.1</div>
+      <div class="sub-title">Entity Accuracy - Hallucination Analysis</div>
+      <p>Entity accuracy is the highest-priority evaluation dimension in WP005. A hallucinated entity in the topic universe propagates as a false gap into every downstream analysis. All entities generated by each model were checked against the ground truth lists and, where uncertain, verified independently.</p>
+
+      <div class="halluc-callout">
+        <div class="halluc-label">Hallucination detected - Gemini 3.5 Flash - V1 (AI/GEO Tools)</div>
+        <p><strong>BrightEdge Generative Parser</strong> - BrightEdge is a real SEO platform but "Generative Parser" is not a real product name. No such named product exists. <strong>Moz AI Analytics</strong> - Moz is a real SEO tool but "Moz AI Analytics" is not a real named product. Moz has general features but no product by this name. <strong>Preora</strong> - No verifiable AI visibility tool by this name exists. This appears to be a wholly invented entity name. In total, Gemini generated 3 hallucinated entities out of 15 in V1 - a 20% hallucination rate for the entity layer.</p>
+      </div>
+
+      <div class="figure">
+        <div class="figure-inner" style="padding:0;">
+          <table class="entity-comparison">
+            <thead>
+              <tr>
+                <th style="width:180px;">Entity</th>
+                <th>Claude Sonnet 4.6</th>
+                <th>ChatGPT GPT-5.5</th>
+                <th>Gemini 3.5 Flash</th>
+                <th>GT Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Semrush</td><td class="entity-real">Yes</td><td class="entity-real">Yes</td><td class="entity-real">Yes (as AISO Tool)</td><td><span class="badge badge-real">Real</span></td></tr>
+              <tr><td>OtterlyAI</td><td class="entity-real">Yes (Otterly.ai)</td><td>No</td><td>No</td><td><span class="badge badge-real">Real</span></td></tr>
+              <tr><td>Peec AI</td><td class="entity-real">Yes</td><td class="entity-real">Yes</td><td>No</td><td><span class="badge badge-real">Real</span></td></tr>
+              <tr><td>Profound</td><td class="entity-real">Yes</td><td class="entity-real">Yes</td><td>No</td><td><span class="badge badge-real">Real</span></td></tr>
+              <tr><td>Scrunch AI</td><td class="entity-real">Yes</td><td class="entity-real">Yes</td><td>No</td><td><span class="badge badge-real">Real</span></td></tr>
+              <tr><td>AthenaHQ</td><td>No</td><td class="entity-real">Yes</td><td>No</td><td><span class="badge badge-real">Real</span></td></tr>
+              <tr><td>Goodie AI</td><td class="entity-real">Yes</td><td class="entity-real">Yes (Goodie)</td><td>No</td><td><span class="badge badge-real">Real</span></td></tr>
+              <tr><td>Rankshift</td><td>No</td><td>No</td><td>No</td><td><span class="badge badge-real">Real - missed all</span></td></tr>
+              <tr><td>Promptwatch</td><td>No</td><td>No</td><td>No</td><td><span class="badge badge-real">Real - missed all</span></td></tr>
+              <tr><td>BrightEdge Generative Parser</td><td>No</td><td>No</td><td class="entity-halluc">Yes - HALLUCINATED</td><td><span class="badge badge-halluc">Hallucinated</span></td></tr>
+              <tr><td>Moz AI Analytics</td><td>No</td><td>No</td><td class="entity-halluc">Yes - HALLUCINATED</td><td><span class="badge badge-halluc">Hallucinated</span></td></tr>
+              <tr><td>Preora</td><td>No</td><td>No</td><td class="entity-halluc">Yes - HALLUCINATED</td><td><span class="badge badge-halluc">Hallucinated</span></td></tr>
+              <tr><td>Brandwatch</td><td class="entity-real">Yes</td><td>No</td><td>No</td><td><span class="badge badge-warn">Tangential</span></td></tr>
+              <tr><td>Ahrefs</td><td class="entity-real">Yes</td><td class="entity-real">Yes</td><td class="entity-real">Yes</td><td><span class="badge badge-warn">Adjacent (SEO, not AI visibility)</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="figure-caption"><strong>Figure 3.</strong> V1 entity accuracy comparison. Claude and ChatGPT produced zero hallucinations. Gemini produced 3 hallucinated entities (20% of its entity list). Notable omission across all three models: Rankshift and Promptwatch - both real, active AI visibility tools from the WP001-004 competitive set - were not generated by any model. This is a meaningful completeness gap the verification step must catch.</div>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <div class="sub-num">3.2</div>
+      <div class="sub-title">Synonym and Subtopic Quality</div>
+      <p>Synonym and subtopic quality was evaluated on two criteria: specificity (are these specific to the query or generic to any topic?) and distinctiveness (are they meaningfully different from each other and from the core topic?).</p>
+
+      <div class="figure">
+        <div class="figure-inner">
+          <div class="chart-wrap">
+            <canvas id="qualityChart" role="img" aria-label="Radar chart comparing synonym quality, subtopic specificity, entity accuracy, related concept depth, and query universe size across three models">Quality comparison across five dimensions for all three models.</canvas>
+          </div>
+        </div>
+        <div class="figure-caption"><strong>Figure 4.</strong> Normalised quality scores (0-100) across five dimensions. Entity accuracy penalised for hallucinations (Gemini -20% for 3 hallucinated entities in V1). Subtopic specificity reflects whether subtopics are query-specific vs generic. Related concept depth reflects whether concepts would genuinely help downstream coverage analysis. Query universe size scores Gemini higher despite hallucinations - it generated more total items.</div>
+      </div>
+
+      <p><strong>Notable finding on subtopics:</strong> Gemini produced the most strategically framed subtopics of the three models in V2 - "Full-Service vs. Niche Marketing Agencies," "Top-Rated Agencies by B2B vs. B2C Verticals," "Enterprise vs. SMB Digital Agencies" - which are more useful for content gap analysis than Claude's functional categories (SEO services, paid media, social media). This is an interesting tension: Gemini hallucinated entities but generated the best subtopics. The module needs to handle this asymmetry.</p>
+    </div>
+
+    <div class="subsection">
+      <div class="sub-num">3.3</div>
+      <div class="sub-title">Full Scoring Table</div>
+
+      <div class="figure">
+        <div class="figure-inner" style="padding:0;">
+          <table class="score-table">
+            <thead>
+              <tr>
+                <th style="width:210px;">Metric</th>
+                <th>Claude Sonnet 4.6</th>
+                <th>ChatGPT GPT-5.5</th>
+                <th>Gemini 3.5 Flash</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="winner-row">
+                <td>Entity count - V1</td>
+                <td class="best">15 <span class="badge badge-best">Best</span></td>
+                <td>15</td>
+                <td>14</td>
+              </tr>
+              <tr>
+                <td>Hallucinated entities - V1</td>
+                <td class="best">0 <span class="badge badge-best">Clean</span></td>
+                <td class="best">0 <span class="badge badge-best">Clean</span></td>
+                <td class="bad">3 (20%) <span class="badge badge-halluc">Fail</span></td>
+              </tr>
+              <tr class="winner-row">
+                <td>GT entities covered - V1</td>
+                <td class="best">10/15 (Rankshift, Promptwatch missed)</td>
+                <td>11/15 (Rankshift, Promptwatch missed)</td>
+                <td>6/15 (multiple missed)</td>
+              </tr>
+              <tr>
+                <td>Hallucinated entities - V2</td>
+                <td class="best">0</td>
+                <td class="best">0</td>
+                <td class="warn">0 (but Omnicom listed separately from IPG)</td>
+              </tr>
+              <tr class="winner-row">
+                <td>Synonym quality - V1 (1-5)</td>
+                <td class="best">5 - All distinct, domain-specific</td>
+                <td>4 - Good, slight overlap</td>
+                <td>4 - Good, more technical framing</td>
+              </tr>
+              <tr>
+                <td>Subtopic specificity - V1 (1-5)</td>
+                <td>4</td>
+                <td>4</td>
+                <td>4</td>
+              </tr>
+              <tr class="winner-row">
+                <td>Subtopic specificity - V2 (1-5)</td>
+                <td>3 - Functional, expected categories</td>
+                <td>4 - Good mix of functional and strategic</td>
+                <td class="best">5 - Strategic framing (B2B vs B2C, SMB vs Enterprise) <span class="badge badge-best">Best</span></td>
+              </tr>
+              <tr>
+                <td>Query universe count - V1</td>
+                <td>50</td>
+                <td>46</td>
+                <td>41</td>
+              </tr>
+              <tr class="winner-row">
+                <td>Query universe count - V2</td>
+                <td>48</td>
+                <td>48</td>
+                <td>41</td>
+              </tr>
+              <tr>
+                <td>Format compliance</td>
+                <td class="best">Full - all 7 sections</td>
+                <td class="best">Full - all 7 sections</td>
+                <td class="best">Full - all 7 sections</td>
+              </tr>
+              <tr class="winner-row">
+                <td>Overall assessment</td>
+                <td class="best">Production-ready - cleanest entity list</td>
+                <td>Production-ready - most comprehensive</td>
+                <td class="warn">Viable post-verification - hallucination risk requires entity check</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="figure-caption"><strong>Figure 5.</strong> Full benchmark scoring table. The hallucination column is the decisive differentiator. Claude and ChatGPT are both production-ready; Gemini requires a mandatory entity verification step before its output can be used as a topic universe anchor. Gemini's best-in-class V2 subtopic framing is noted but does not offset the entity accuracy risk.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 4 -->
+  <div class="section">
+    <div class="section-num">SECTION 4</div>
+    <div class="section-title">Key Findings</div>
+    <div class="section-rule"></div>
+
+    <div class="findings-grid">
+      <div class="finding-card">
+        <div class="finding-num">F1</div>
+        <div class="finding-label">All three models produced valid topic universes</div>
+        <div class="finding-body">Despite the absence of page content as an anchor, all three frontier models generated coherent, well-structured topic universes across both verticals. Format compliance was perfect across all six models. The generative task is well within frontier model capabilities.</div>
+      </div>
+      <div class="finding-card">
+        <div class="finding-num">F2</div>
+        <div class="finding-label">Gemini hallucinated 3 entities in V1 - 20% rate</div>
+        <div class="finding-body">BrightEdge Generative Parser, Moz AI Analytics, and Preora do not exist as named products. This is Gemini's most serious failure across the five-paper series - in WP002-004 its errors were quantitative (inflation); here they are factual (fabrication). A hallucinated entity in the topic universe creates false gaps in every downstream analysis.</div>
+      </div>
+      <div class="finding-card">
+        <div class="finding-num">F3</div>
+        <div class="finding-label">Claude produced the cleanest entity list</div>
+        <div class="finding-body">Zero hallucinations across both verticals. All 15 V1 entities are real and verifiable. This is consistent with Claude's conservative, calibrated approach observed in WP001-004. Claude's instruction compliance ("do not invent entity names") was the strongest of the three models.</div>
+      </div>
+      <div class="finding-card">
+        <div class="finding-num">F4</div>
+        <div class="finding-label">ChatGPT covered the most ground truth entities</div>
+        <div class="finding-body">ChatGPT generated 11 of 15 ground truth entities for V1 - the highest coverage - and included AthenaHQ which Claude missed. Its V2 entity list covered both legacy holding companies (WPP, Dentsu, Publicis) and independent agencies (WebFX, KlientBoost, Ignite Visibility, Tinuiti) more comprehensively than Claude.</div>
+      </div>
+    </div>
+
+    <div class="finding-card" style="margin-top:20px; border:1px solid var(--rule); padding:24px; background:#fff;">
+      <div class="finding-num">F5</div>
+      <div class="finding-label">Gemini's subtopic framing is the most strategically useful - asymmetry with entity quality</div>
+      <div class="finding-body" style="font-family:var(--sans); font-size:13px; color:var(--ink-4); line-height:1.6; margin-top:8px;">In V2, Gemini generated subtopics like "Full-Service vs. Niche Marketing Agencies," "Top-Rated Agencies by B2B vs. B2C Verticals," and "Enterprise vs. SMB Digital Agencies." Claude generated functional categories like "SEO and organic search services," "Paid media and PPC management." Gemini's subtopics are more useful for content gap analysis - they reflect the actual decisions a buyer makes, not just the service categories. This asymmetry (best subtopics, worst entity accuracy) means the module cannot use any single model for all six layers. The architecture should default to Claude for entities and could optionally use Gemini's subtopic framing as an enhancement layer.</div>
+    </div>
+
+    <div class="finding-card" style="margin-top:16px; border:1px solid var(--rule); padding:24px; background:#fff;">
+      <div class="finding-num">F6</div>
+      <div class="finding-label">Two real entities missed by all three models - Rankshift and Promptwatch</div>
+      <div class="finding-body" style="font-family:var(--sans); font-size:13px; color:var(--ink-4); line-height:1.6; margin-top:8px;">Neither Rankshift nor Promptwatch appeared in any model's V1 entity list, despite both being real, active AI visibility platforms documented extensively in WP001-003. This is an expected limitation - models generate from training data, which has a knowledge cutoff, and newer entrants in niche markets may not be represented. This validates the need for the post-processing entity enrichment step: after model generation, the module should cross-reference the universe against a curated domain entity registry (maintained and updated by the user) to catch omissions that models cannot know about.</div>
+    </div>
+
+    <div class="new-finding">
+      <div class="new-finding-label">Series finding across WP001-005</div>
+      <p>WP005 confirms and extends the series-level pattern. Claude Sonnet 4.6 is production-ready across all five modules. ChatGPT GPT-5.5 is production-ready across all five. Gemini 3.5 Flash has a task-specific failure pattern in every paper: topic under-generation (WP002), aggressive boundary classification (WP003), over-estimated confidence (WP004), entity hallucination (WP005). WP005 reveals the most serious Gemini failure to date - fabricated entity names - which is qualitatively worse than the quantitative inflation observed in earlier papers. The AI Spider content intelligence suite recommends Claude as the default for all five modules, with the entity verification step as mandatory insurance regardless of which model is used.</p>
+    </div>
+  </div>
+
+  <!-- SECTION 5 -->
+  <div class="section">
+    <div class="section-num">SECTION 5</div>
+    <div class="section-title">Implications for AI Spider</div>
+    <div class="section-rule"></div>
+
+    <ul class="implications-list">
+      <li class="implication">
+        <div class="imp-num">01</div>
+        <div>
+          <div class="imp-title">Mandatory entity verification step after generation</div>
+          <div class="imp-body">Finding F2 establishes that even frontier models hallucinate entity names when generating without page content. The module will include a post-generation entity verification step: each named entity is checked against a domain registry and optionally web-verified before being added to the topic universe. Unverified entities are flagged as "unconfirmed" and excluded from downstream entity gap analyses until confirmed.</div>
+        </div>
+      </li>
+      <li class="implication">
+        <div class="imp-num">02</div>
+        <div>
+          <div class="imp-title">User-editable entity registry for domain-specific enrichment</div>
+          <div class="imp-body">Finding F6 establishes that models miss real entities outside their training data. The module will maintain a user-editable entity registry per domain, allowing users to add known entities (like Rankshift or Promptwatch for AI visibility) that models consistently miss. These user-added entities are merged with the model-generated universe before downstream analyses run.</div>
+        </div>
+      </li>
+      <li class="implication">
+        <div class="imp-num">03</div>
+        <div>
+          <div class="imp-title">Layer-level model selection for asymmetric quality</div>
+          <div class="imp-body">Finding F5 establishes that Gemini produces superior subtopics but inferior entities. The module architecture will allow layer-level model selection: Claude for entities (lowest hallucination risk), Gemini's subtopic framing available as an optional "strategic enhancement" that users can toggle on. This avoids forcing an all-or-nothing model choice when different models excel at different layers.</div>
+        </div>
+      </li>
+      <li class="implication">
+        <div class="imp-num">04</div>
+        <div>
+          <div class="imp-title">Query universe stored and reused across all modules</div>
+          <div class="imp-body">The generated universe is stored in AI Spider's database and reused as the reference set for all subsequent CCI, Coverage Score, Retrieval Drift, and Coverage vs Confidence analyses for that query. This ensures consistency - the same entity list, subtopic set, and synonym set anchors every analysis. Running Query Expansion once per query rather than embedding it inside each module's prompt also reduces token cost across the platform.</div>
+        </div>
+      </li>
+      <li class="implication">
+        <div class="imp-num">05</div>
+        <div>
+          <div class="imp-title">Pre-analysis capability before any URLs are crawled</div>
+          <div class="imp-body">Because Query Expansion requires no page content, it can run the moment a user enters a query - before they have selected any target or competitor URLs. This enables a new workflow: users see the full topic universe, verify it, and use it to inform which competitor pages to include in subsequent analyses. RankScan also uses the alternative queries layer to expand monitoring scope beyond the primary query automatically.</div>
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <!-- SECTION 6 -->
+  <div class="section">
+    <div class="section-num">SECTION 6</div>
+    <div class="section-title">Next Steps</div>
+    <div class="section-rule"></div>
+
+    <ul class="paper-list">
+      <li><span class="li-num">6.1</span><span class="li-body"><strong>Module build - AI Spider Query Expansion tab:</strong> Runs on prompt input before any URL analysis. Generates six-layer topic universe. Includes entity verification step and user-editable registry. Stores universe in database for reuse. Claude Sonnet 4.6 as default entity generator; Gemini subtopic framing available as optional enhancement.</span></li>
+      <li><span class="li-num">6.2</span><span class="li-body"><strong>Domain entity registry:</strong> Build and maintain a curated entity registry for the AI/GEO tools vertical as the first domain. Cross-reference model-generated entities against the registry on every Query Expansion run. Publish the registry as an open reference for AI Spider users.</span></li>
+      <li><span class="li-num">6.3</span><span class="li-body"><strong>Cross-module universe propagation:</strong> Implement the shared universe store across all five content intelligence tabs. When a user runs Coverage Score or CCI after Query Expansion, the stored universe is automatically used as the expected topic and entity set - no re-generation needed, no inconsistency possible.</span></li>
+      <li><span class="li-num">6.4</span><span class="li-body"><strong>RankScan integration via alternative queries:</strong> Pass the alternative queries layer from Query Expansion to RankScan automatically. This expands brand monitoring scope beyond the primary query to all intent variations without requiring manual setup from the user.</span></li>
+      <li><span class="li-num">6.5</span><span class="li-body"><strong>Longitudinal study - WP006:</strong> Following full deployment of all five AI Spider content intelligence modules, measure AI citation rate changes via RankScan across 90 days for sites that implement module-informed content updates vs a control group. This is the evidence-based capstone of the series - does the full methodology produce measurable AI retrievability improvement?</span></li>
+    </ul>
+
+    <div class="callout">
+      <div class="callout-label">Complete Research Series</div>
+      <p><strong>WP001</strong> - Competitive Content Intelligence: pairwise gap analysis, 6 dimensions, 7B+ local model threshold confirmed.<br>
+      <strong>WP002</strong> - Coverage Score and Entity Expansion: prompt-driven coverage scoring, Stage 1 topic ceiling finding, Gemini under-generation identified.<br>
+      <strong>WP003</strong> - Retrieval Drift Analysis: entity classification, drift scoring, relative ranking reliability, drift cause description as primary output.<br>
+      <strong>WP004</strong> - Coverage vs Confidence: dual-dimension independence, deterministic signal audit, matrix quadrant classification, coverage calibration confirmed.<br>
+      <strong>WP005</strong> - Query Expansion: topic universe generation, entity hallucination risk quantified, Gemini subtopic asymmetry found, user-editable registry approach validated.<br>
+      <strong>WP006</strong> (planned) - Longitudinal correlation: does closing content gaps, improving coverage, reducing drift, adding confidence signals, and using an accurate topic universe produce measurable AI citation improvement?</p>
+    </div>
+  </div>
+
+  <!-- NOTE ON SOURCES -->
+  <div class="section">
+    <div class="section-num">NOTE ON SOURCES</div>
+    <div class="section-rule thin"></div>
+    <p style="font-size:14px;">No page content was provided to models in this benchmark. All model outputs were generated purely from domain knowledge. Ground truth entity lists were compiled manually before running any model tests from verified sources including the WP001-004 competitive pages, public tool directories, and independent research. Hallucination verification for Gemini V1 entities conducted via product name search and official documentation review in May 2026.</p>
+    <p style="font-size:14px;">Models tested: Claude Sonnet 4.6 (Anthropic), ChatGPT GPT-5.5 (OpenAI), Gemini 3.5 Flash (Google). All tests conducted May 2026. Fifth in series: WP001 CCI, WP002 Coverage Score, WP003 Retrieval Drift, WP004 Coverage vs Confidence, WP005 Query Expansion - all by Akshay Dahiya, 2026.</p>
+  </div>
+
+</div>
+
+<div class="paper-footer">
+  <div><strong>Akshay Dahiya</strong> - Query Expansion for AI Retrievability - Working Paper 005</div>
+  <div>2026 &nbsp;|&nbsp; akshaydahiya.site &nbsp;|&nbsp; Fifth in series: WP001-WP005</div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var ctx = document.getElementById('qualityChart');
+  if (!ctx) return;
+  new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: ['Entity accuracy', 'Synonym quality', 'Subtopic specificity', 'Related concept depth', 'Universe completeness'],
+      datasets: [
+        {
+          label: 'Claude Sonnet 4.6',
+          data: [100, 90, 75, 80, 82],
+          borderColor: '#4f46e5',
+          backgroundColor: 'rgba(79,70,229,0.1)',
+          borderWidth: 2,
+          pointBackgroundColor: '#4f46e5',
+          pointRadius: 4
+        },
+        {
+          label: 'ChatGPT GPT-5.5',
+          data: [100, 80, 80, 82, 88],
+          borderColor: '#059669',
+          backgroundColor: 'rgba(5,150,105,0.08)',
+          borderWidth: 2,
+          pointBackgroundColor: '#059669',
+          pointRadius: 4
+        },
+        {
+          label: 'Gemini 3.5 Flash',
+          data: [60, 80, 88, 76, 78],
+          borderColor: '#d97706',
+          backgroundColor: 'rgba(217,119,6,0.08)',
+          borderWidth: 1.5,
+          borderDash: [4, 3],
+          pointBackgroundColor: '#d97706',
+          pointRadius: 4
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            font: { family: 'Source Sans 3', size: 12 },
+            color: '#4a4640',
+            padding: 20,
+            boxWidth: 12
+          }
+        }
+      },
+      scales: {
+        r: {
+          min: 0, max: 100,
+          ticks: {
+            stepSize: 25,
+            font: { family: 'Source Code Pro', size: 10 },
+            color: '#a8a39d',
+            backdropColor: 'transparent'
+          },
+          grid: { color: 'rgba(26,24,20,0.1)' },
+          angleLines: { color: 'rgba(26,24,20,0.1)' },
+          pointLabels: {
+            font: { family: 'Source Sans 3', size: 12, weight: '600' },
+            color: '#2e2b26'
+          }
+        }
+      }
+    }
+  });
+});
+</script>
+</body>
+</html>
