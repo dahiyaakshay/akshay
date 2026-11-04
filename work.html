@@ -36,11 +36,18 @@
   }
 }
 </script>
+<style>
+  /* Inline work-card marks, lifted from the Searchbench and Workbench sites.
+     Hover shifts each tile to another colour from its own brand palette. */
+  .work-card svg.icon-logo rect { transition: fill .18s ease; }
+  .work-card:hover svg.icon-logo,
+  .work-card:focus-visible svg.icon-logo { --sb-tile: #93CC2E; --wb-tile: #1E2B3E; }
+</style>
 </head>
 <body>
-
+ 
 <div class="grid-overlay" id="gridOverlay"></div>
-
+ 
 <header>
   <div class="wordmark"><a href="index.html" style="color:inherit;">Akshay Dahiya <span class="mono">/ AD</span></a></div>
   <div class="nav-wrap" id="navWrap">
@@ -60,9 +67,9 @@
     <span></span><span></span><span></span>
   </button>
 </header>
-
+ 
 <main class="wrap">
-
+ 
   <!-- HERO -->
   <section class="work-hero">
     <div class="work-topbar">
@@ -76,7 +83,7 @@
       <p class="blog-hero-sub">Some of this is live and in daily use. Some is mid-build. All of it comes from the same place: solving a specific, repeatable problem in SEO or GEO well enough to package it, document it and hand it to someone else.</p>
     </div>
   </section>
-
+ 
   <!-- TOOLS -->
   <section class="section" id="tools">
     <div class="work-cat-head">
@@ -89,7 +96,7 @@
       </div>
       <a href="mailto:akshaydahiya92.ad@gmail.com" class="btn-ghost">Work with me →</a>
     </div>
-
+ 
     <div class="work-grid work-grid-3">
       <a href="https://aispider.akshaydahiya.site/" target="_blank" rel="noopener" class="work-card">
         <img class="icon icon-logo" src="assets/svg/ai-spider-logo.svg" alt="" width="34" height="34">
@@ -97,21 +104,29 @@
         <p>An AI retrievability audit platform that extends traditional crawling with citation-readiness analysis. Seven GEO modules, including citation readiness scoring, section strength analysis, HITS-based authority mapping and N-gram analysis, built to replace a commercial crawler license while adding AI-retrievability signals traditional crawlers don't surface.</p>
         <span class="tag">Shipped</span>
       </a>
-      <a href="https://marai.akshaydahiya.site/" target="_blank" rel="noopener" class="work-card">
-        <img class="icon icon-logo" src="assets/svg/marai-logo.svg" alt="" width="34" height="34">
-        <h3>MarAI</h3>
-        <p>An AI marketing operations platform built on Gemini, consolidating content generation, GEO planning, citation analysis, persona development and reporting into a single system. Replaces four to six separate paid subscriptions and cuts campaign execution time by up to 80%.</p>
+      <a href="https://searchbench.akshaydahiya.site/" target="_blank" rel="noopener" class="work-card">
+        <svg class="icon icon-logo" viewBox="0 0 64 64" width="34" height="34" aria-hidden="true" focusable="false">
+          <rect width="64" height="64" rx="17" fill="var(--sb-tile, #A3DC3C)"/>
+          <path d="M14 42l12-14 9 9 16-20" fill="none" stroke="#14181A" stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <h3>Searchbench</h3>
+        <p>A local SEO workbench that reads the Search Console and Analytics exports you already download, runs thirty-odd checks over them, and shows the arithmetic behind every finding instead of a score. No model touches the analysis, so reading costs nothing and works offline; writing pages runs through your own API key with a ceiling you set. Built and tuned against 345 pages and 1,300 queries.</p>
         <span class="tag">Shipped</span>
       </a>
-      <div class="work-card">
-        <img class="icon icon-logo" src="assets/svg/psi-brain-solid.svg" alt="" width="34" height="34">
-        <h3>PSI <span class="status-badge"><span class="dot"></span>Building</span></h3>
-        <p>Predictive Search Intelligence: a dashboard forecasting SEO performance ahead of time using machine-learning models, giving a forward-looking view of rankings, traffic and visibility trends rather than the retrospective reporting most SEO dashboards default to.</p>
-        <span class="tag">In Development</span>
-      </div>
+      <a href="https://workbench.akshaydahiya.site/" target="_blank" rel="noopener" class="work-card">
+        <svg class="icon icon-logo" viewBox="0 0 64 64" width="34" height="34" aria-hidden="true" focusable="false">
+          <rect width="64" height="64" rx="15" fill="var(--wb-tile, #141C28)"/>
+          <rect x="10" y="41" width="44" height="5" rx="2.5" fill="#2E6FE0"/>
+          <path d="M14 17 L21.5 37 L28 23.5 L34.5 37 L42 17" fill="none" stroke="#fff" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="49" cy="20" r="4" fill="#18A07A"/>
+        </svg>
+        <h3>Workbench</h3>
+        <p>A local client website workbench that runs a build across 19 stages, from the first requirements call to the optimisation loop that never ends. Each stage reads what the ones before it decided and ends in a document you can hand over. No progress bars anywhere: status is derived from the data, and the launch decision reads six gates live from the stages that own them.</p>
+        <span class="tag">Shipped</span>
+      </a>
     </div>
   </section>
-
+ 
   <!-- SKILLS -->
   <section class="section" id="skills">
     <div class="work-cat-head">
@@ -124,7 +139,7 @@
       </div>
       <a href="https://github.com/dahiyaakshay/marketing-skills" target="_blank" rel="noopener" class="btn-ghost">Explore all skills →</a>
     </div>
-
+ 
     <div class="work-grid work-grid-3">
       <a href="https://github.com/dahiyaakshay/marketing-skills/tree/main/skills/geo/ai-citation-optimization" target="_blank" rel="noopener" class="work-card">
         <img class="icon" src="assets/svg/work/icon-citation-mark.svg" alt="" width="34" height="34">
@@ -146,7 +161,7 @@
       </a>
     </div>
   </section>
-
+ 
   <!-- FREE TOOLS -->
   <section class="section" id="free-tools">
     <div class="work-cat-head">
@@ -159,7 +174,7 @@
       </div>
       <a href="https://github.com/dahiyaakshay/geo-seo-cli-tools" target="_blank" rel="noopener" class="btn-ghost">Explore all free tools →</a>
     </div>
-
+ 
     <div class="work-grid work-grid-3">
       <a href="https://github.com/dahiyaakshay/geo-seo-cli-tools/tree/main/llms-txt-generator" target="_blank" rel="noopener" class="work-card">
         <img class="icon" src="assets/svg/work/icon-llms-file.svg" alt="" width="34" height="34">
@@ -181,9 +196,9 @@
       </a>
     </div>
   </section>
-
+ 
 </main>
-
+ 
 <footer id="contact">
   <div class="wrap">
     <div class="contact-inner">
@@ -209,8 +224,8 @@
     </div>
   </div>
 </footer>
-
+ 
 <script src="assets/js/script.js" defer></script>
-
+ 
 </body>
 </html>
