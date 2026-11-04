@@ -53,16 +53,11 @@
 }
 </script>
 <style>
-  /* Inline work-card marks. Colour follows the card, so hover is one variable. */
-  .work-card svg.icon-logo {
-    color: var(--logo-ink, #7C6E5C);
-    transition: color .18s ease;
-  }
+  /* Inline work-card marks, lifted from the Searchbench and Workbench sites.
+     Hover shifts each tile to another colour from its own brand palette. */
+  .work-card svg.icon-logo rect { transition: fill .18s ease; }
   .work-card:hover svg.icon-logo,
-  .work-card:focus-visible svg.icon-logo {
-    color: var(--logo-ink-hover, #2E2A24);
-  }
-  .work-card svg.icon-logo .mark-dim { opacity: .55; }
+  .work-card:focus-visible svg.icon-logo { --sb-tile: #93CC2E; --wb-tile: #1E2B3E; }
 </style>
 </head>
 <body>
@@ -211,21 +206,20 @@
         <span class="tag">Automation</span>
       </a>
       <a href="https://searchbench.akshaydahiya.site/" target="_blank" rel="noopener" class="work-card">
-        <svg class="icon icon-logo" viewBox="0 0 34 34" width="34" height="34" fill="none" stroke="currentColor" aria-hidden="true" focusable="false">
-          <path class="mark-dim" d="M4.5 25.5h9M4.5 29.5h6" stroke-width="1.5" stroke-linecap="round"/>
-          <circle cx="13.5" cy="13.5" r="9" stroke-width="1.6"/>
-          <path d="M9 11.5h9M9 15.5h5.5" stroke-width="1.5" stroke-linecap="round"/>
-          <path d="M20 20 29.5 29.5" stroke-width="2" stroke-linecap="round"/>
+        <svg class="icon icon-logo" viewBox="0 0 64 64" width="34" height="34" aria-hidden="true" focusable="false">
+          <rect width="64" height="64" rx="17" fill="var(--sb-tile, #A3DC3C)"/>
+          <path d="M14 42l12-14 9 9 16-20" fill="none" stroke="#14181A" stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
         <h3>Searchbench</h3>
         <p>A local SEO workbench that reads the Search Console and Analytics exports you already download, shows the arithmetic behind every finding, and writes the pages worth writing.</p>
         <span class="tag">Local SEO Tool</span>
       </a>
       <a href="https://workbench.akshaydahiya.site/" target="_blank" rel="noopener" class="work-card">
-        <svg class="icon icon-logo" viewBox="0 0 34 34" width="34" height="34" fill="none" stroke="currentColor" aria-hidden="true" focusable="false">
-          <path class="mark-dim" d="M5 6.5v21M2.5 6.5h5M2.5 27.5h5" stroke-width="1.4" stroke-linecap="round"/>
-          <path d="M12 7h18M12 13.5h18M12 20h11M12 26.5h18" stroke-width="1.6" stroke-linecap="round"/>
-          <rect x="26" y="17.5" width="5" height="5" fill="currentColor" stroke="none"/>
+        <svg class="icon icon-logo" viewBox="0 0 64 64" width="34" height="34" aria-hidden="true" focusable="false">
+          <rect width="64" height="64" rx="15" fill="var(--wb-tile, #141C28)"/>
+          <rect x="10" y="41" width="44" height="5" rx="2.5" fill="#2E6FE0"/>
+          <path d="M14 17 L21.5 37 L28 23.5 L34.5 37 L42 17" fill="none" stroke="#fff" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="49" cy="20" r="4" fill="#18A07A"/>
         </svg>
         <h3>Workbench</h3>
         <p>Runs a client website build across 19 stages, from requirements to the optimisation loop, with every stage producing a real deliverable and status derived from the data rather than declared.</p>
@@ -380,4 +374,3 @@
  
 </body>
 </html>
-
